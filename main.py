@@ -2,19 +2,45 @@ import numpy as np
 import librosa
 import cv2
 import random
-import moviepy.editor as mp
+import ffmpeg
 import pdb
 
 random.seed(10)
-    
+ 
+
+# correct rotation 
+def check_rotation(path_video_file):
+    # this returns meta-data of the video file in form of a dictionary
+    meta_dict = ffmpeg.probe(path_video_file)
+
+    # from the dictionary, meta_dict['streams'][0]['tags']['rotate'] is the key
+    # we are looking for
+    rotateCode = None
+    if 'rotate' not in meta_dict['streams'][0]['tags']:
+        return None
+
+    if int(meta_dict['streams'][0]['tags']['rotate']) == 90:
+        rotateCode = cv2.ROTATE_90_CLOCKWISE
+    elif int(meta_dict['streams'][0]['tags']['rotate']) == 180:
+        rotateCode = cv2.ROTATE_180
+    elif int(meta_dict['streams'][0]['tags']['rotate']) == 270:
+        rotateCode = cv2.ROTATE_90_COUNTERCLOCKWISE
+
+    return rotateCode
+def correct_rotation(frame, rotateCode):  
+    return cv2.rotate(frame, rotateCode)
+
+
 # find beats in the audio
 def findBeats(y, sr):
     # use Librosa API, keep it sparse, around min 5seconds for a video
     
     out = np.zeros(len(y))
-    val = len(y)/5.0
-    for i in range(5):
-        out[int(i*val)] = 1
+    out[int(6.117*22050)] = 1
+    out[int(10.104*22050)] = 1
+    out[int(18.115*22050)] = 1
+    out[int(26.088*22050)] = 1
+    out[int(34.100*22050)] = 1
     return out
 
 # find room acoustics using the SSD video scenes
@@ -25,7 +51,7 @@ def findAcoustics(videos):
         conditions.append(None)
     return conditions
 
-# enhance audio for each video's acoustics
+# enhance audio for each video's acousticsg
 def enhanceAudios(y, sr, conditions):
     # use Spotify's pedal-box API
     outputs = []
@@ -42,8 +68,12 @@ def render_video(video_locations, video_assignments, sr):
 
     frames = []
     caps = []
+    rotateCodes = []
     for path in video_locations:
+        # print(path)
         caps.append(cv2.VideoCapture(path))
+        rotateCodes.append(check_rotation(path))
+        # print(check_rotation(path))
 
     frame_width = int(caps[0].get(3))
     frame_height = int(caps[0].get(4))
@@ -54,10 +84,14 @@ def render_video(video_locations, video_assignments, sr):
     for i in range(int(len(video_assignments)*30.0/sr)):
         assignment_idx = int(i*sr/30.0)
         cap = caps[video_assignments[assignment_idx]]
+        rotateCode = rotateCodes[video_assignments[assignment_idx]]
         if cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
+
+            # if rotateCode is not None:
+            #     frame = correct_rotation(frame, rotateCode)
 
             out.write(frame)
             frames.append(frame)
@@ -68,10 +102,10 @@ def render_video(video_locations, video_assignments, sr):
     return True
 
 # create the mashup audio
-def render_audio(video_locations, y, sr, video_assignments):
+def render_audio(audios, sr, video_assignments):
     # it's all math
 
-    return y, sr
+    return None
     
 def main():
 
@@ -116,7 +150,7 @@ def main():
     final_vid_flag = render_video(video_locations, video_assignments, sr)
 
     # render the final audio
-    final_audio, sr = render_audio(audios, sr, video_assignments)
+    final_audio_flag = render_audio(audios, sr, video_assignments)
 
     return None
 
