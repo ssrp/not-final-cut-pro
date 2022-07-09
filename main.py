@@ -54,7 +54,7 @@ def render_video(video_locations, video_assignments, sr):
     for i in range(int(len(video_assignments)*30.0/sr)):
         assignment_idx = int(i*sr/30.0)
         cap = caps[video_assignments[assignment_idx]]
-        while cap.isOpened():
+        if cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
