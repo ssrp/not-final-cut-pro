@@ -9,7 +9,6 @@ import random
 import ffmpeg
 import pdb
 import soundfile as sf
-from beat import *
 
 random.seed(10)
 
