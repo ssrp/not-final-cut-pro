@@ -18,10 +18,12 @@ import pdb
 
 random.seed(10)  # 10 for wonderful world # 1 for sleepwalk
 
+
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
 
 # find beats in the audio
 def findBeats(y, sr, sec_thres, max_peaks):
@@ -101,4 +103,4 @@ def main(
 if __name__ == "__main__":
     config = json.load(open("./config.json", "r"))
     config = AttrDict(config)
-    main(video_locations=config.video, config.audio)
+    main(video_locations=config.video, audio_input=config.audio)
