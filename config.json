@@ -6,10 +6,11 @@
         "./videos/4.mp4",
         "./videos/5.mp4",
         "./videos/6.mp4",
-        "./videos/bg_speech.mp4"
+        "./videos/bg_speech.mp4",
+        "./videos/8.mp4"
     ],
-    "audio": "./input_audio.json",
-    "output_dir": "tmp",
-    "sec_threshold": 3,
-    "videochange_threshold": 0.5
+    "audio": "./audio/paris.mp3",
+    "sec_threshold": 3, 
+    "videochange_threshold": 10,
+    "shuffle_videos": 1
 }
