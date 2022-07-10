@@ -103,4 +103,4 @@ def main(
 if __name__ == "__main__":
     config = json.load(open("./config.json", "r"))
     config = AttrDict(config)
-    main(video_locations=config.video, audio_input=config.audio)
+    main(video_locations=config.videos, audio_input=config.audio)
