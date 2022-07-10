@@ -1,0 +1,15 @@
+{
+    "videos": [
+        "./videos/1.mp4",
+        "./videos/2.mp4",
+        "./videos/3.mp4",
+        "./videos/4.mp4",
+        "./videos/5.mp4",
+        "./videos/6.mp4",
+        "./videos/bg_speech.mp4"
+    ],
+    "audio": "./input_audio.json",
+    "output_dir": "tmp",
+    "sec_threshold": 3,
+    "videochange_threshold": 0.5
+}
