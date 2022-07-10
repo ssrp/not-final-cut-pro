@@ -3,6 +3,7 @@ import numpy as np
 import librosa
 from src.helper import check_rotation, correct_rotation
 
+import pdb
 # create the mashup video using the video
 def render_video(video_locations, video_assignments, sr):
     # it's all math
@@ -52,27 +53,41 @@ def render_video(video_locations, video_assignments, sr):
 
 
 # create the mashup audio
-def render_audio(video_locations, ys, sr, video_assignments, alpha):
+def render_audio(audios, ys, sr, video_assignments):
     # it's all math
 
-    audios = []
-    for path in video_locations:
-        audio, sr = librosa.load(path)
-        audio = audio * 1.0 / np.max(np.abs(audio))
-        audios.append(audio)
 
-    idx = np.zeros(len(video_locations), dtype=int)
+    idx = np.zeros(len(audios), dtype=int)
     out_wav = []
     for i in range(len(video_assignments)):
-        video_idx = video_assignments[i] % len(video_locations)
+        video_idx = video_assignments[i] % len(audios)
 
-        out =  audios[video_idx][idx[video_idx]%len(ys[video_idx])] * (1 - alpha) + ys[video_idx][i] * alpha 
+        out =  audios[video_idx][idx[video_idx]%len(ys[video_idx])]
 
         idx[video_idx] += 1
         if(idx[video_idx] >= len(audios[video_idx])):
             idx[video_idx] = 0
         out_wav.append(out)
+    
 
-    out_wav = np.array(out_wav)
+    scenes = np.array(out_wav)
 
+    wave = []
+
+    last_assg = None
+    for i in range(len(video_assignments)):
+        video_idx = video_assignments[i] % len(audios)
+        
+        if(last_assg != video_idx):
+            for j in range(int(sr)):
+                if(len(wave) - j > 0):
+                    wave[-j-1] = wave[-j-1] * (j*1.0/sr) + ys[video_idx][i-j] * ((int(sr) - j)*1.0/sr)
+
+        wave.append(ys[video_idx][i])
+        
+        last_assg = video_idx
+    wave = np.array(wave) 
+
+    out_wav = wave + scenes
+ 
     return out_wav
