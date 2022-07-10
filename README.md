@@ -2,7 +2,8 @@
 
 With proliferation of mobile devices, people are always capturing their life events. But when it comes to present them on social media platforms, the videos needs editing. This quickly gets boring and mundane with use of video editing softwares coming into picture. We have a way around this: 
 
-Here is our state-of-the-art video mashup system (or not) with the most advanced audio APIs to render your precious moments in the day. 
+Here is the state-of-the-art video mashup system with the most advanced audio APIs to render your precious moments in the day. This is the best out there (or at least this works).
+
 To start with, the our system takes in a bunch of clips from the user along with a desired audio file. Our system analyses the videos and audio, find the most suitable portions and combine them to create a beautiful montage for you. 
 
 ### Our features:
