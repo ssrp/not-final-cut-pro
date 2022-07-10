@@ -84,36 +84,87 @@ def findAcoustics(video_locations):
     reverb_info = logits[:, 507] + logits[:, 511] - (logits[:, 509] + logits[:, 510] +  logits[:, 506])
     reverb_info = reverb_info.numpy()
     reverb_info -= min(reverb_info)
-    reverb_info /= max(reverb_info) + 0.0001
+    reverb_info /= max(reverb_info) + 0.00001
 
     noise = [327, 513, 514, 300, 321, 307, 285]
     noise_info = np.sum(logits[:, noise].numpy(), axis=1)
+    noise_info -= min(noise_info)
+    noise_info /= max(noise_info) + 0.00001
 
     speech_present = logits[:, 0] > 2.5
     music_present = logits[:, 137] > 1
 
-
-    ocean_scene = logits[:, 301] + logits[:, 294] + logits[:, 295] + logits[:, 289]
-    ocean_scene = ocean_scene.numpy()
+    ocean = [301, 294, 295, 289]
+    ocean_scene = np.sum(logits[:, ocean].numpy(), axis=1)
+    ocean_scene = ocean_scene
     ocean_scene -= min(ocean_scene)
-    ocean_scene /= max(ocean_scene) + 0.0001
+    ocean_scene /= max(ocean_scene) + 0.00001
 
     conditions = []
-    for path in video_locations:
-        conditions.append(None)
+    for i in range(len(video_locations)):
+        condition = {'reverb': reverb_info[i], 'noise': noise_info[i], 'speech': speech_present[i], 'music': music_present[i], 'ocean': ocean_scene[i]}
+        conditions.append(condition)
+
     return conditions
 
 
 # enhance audio for each video's acousticsg
-def enhanceAudios(y, sr, conditions):
+def enhanceAudios(y, sr, conditions, video_locations):
 
+
+    audios = []
+    for path in video_locations:
+        audio, sr = librosa.load(path)
+        audio = audio * 0.2 / np.max(np.abs(audio))
+        audios.append(audio)
+
+    y = y * 0.8 / np.max(np.abs(y))
+    
     # use Spotify's pedal-box API
     outputs = []
-    for each in conditions:
+    scenes = []
+    idx = 0
+    for context in conditions:
+        scene = audios[idx]
+        idx+=1
+        out_y = y
+        out_scene = scene
+        if(context["speech"]):
+            # eq low fi
+            board = Pedalboard([LadderFilter(mode=LadderFilter.Mode.LPF24, cutoff_hz=1000), Gain(gain_db=-4)])
+            out_y = board(y, sr)
+
+            board = Pedalboard([Gain(gain_db=5.0)])
+            out_scene = board(scene, sr)
+
+        elif(context["music"]):
+            board = Pedalboard([LadderFilter(mode=LadderFilter.Mode.LPF24, cutoff_hz=1000), Gain(gain_db=-10)])
+            out_y = board(y, sr)
+
+            board = Pedalboard([Gain(gain_db=5.0)])
+            out_scene = board(scene, sr)
+        else:
+            noise_gain = context['noise']*-4
+            board = Pedalboard([Gain(gain_db=noise_gain)])
+            out_scene = board(scene, sr)
+
+            ocean_vibe = context['ocean']*0.5
+            room_acoustics = (1-context['reverb'])*0.2
+            reverb = room_acoustics + ocean_vibe
+            if(reverb > 0.5):
+                reverb = 0.5
+            if(idx != 1):
+                board = Pedalboard([LadderFilter(mode=LadderFilter.Mode.LPF24, cutoff_hz=int(2000 + 5000*context["noise"])), Reverb(room_size=reverb)])
+                out_y = board(y, sr)
+
+        
         # process y according to each condition and append to outputs
-        out = y
-        out = out * 1.0 / np.max(np.abs(out))
-        outputs.append(out)
-    return outputs
+        
+        
+        scenes.append(out_scene)
+        outputs.append(out_y)
+
+
+    return scenes, outputs
 
 
