@@ -82,9 +82,9 @@ def findAcoustics(video_locations):
         logits = model(audios)
 
     reverb_info = logits[:, 507] + logits[:, 511] - (logits[:, 509] + logits[:, 510] +  logits[:, 506])
-    cean_scene = ocean_scene.numpy()
-    ocean_scene -= min(ocean_scene)
-    ocean_scene /= max(ocean_scene) + 0.0001
+    reverb_info = reverb_info.numpy()
+    reverb_info -= min(reverb_info)
+    reverb_info /= max(reverb_info) + 0.0001
 
     noise = [327, 513, 514, 300, 321, 307, 285]
     noise_info = np.sum(logits[:, noise].numpy(), axis=1)
