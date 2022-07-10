@@ -2,36 +2,47 @@
 from hear21passt.base import get_basic_model, get_model_passt
 import torch
 
-model = get_basic_model(mode="logits")
+# model = get_basic_model(mode="logits")
 import numpy as np
 import librosa
 import cv2
 import random
-import ffmpeg
 import pdb
+import ffmpeg
 import soundfile as sf
 from src.beat_detection import find_onesets
+from check_orientation.pre_trained_models import create_model
 
 random.seed(10)
 
 
-# correct rotation
+# correct rotationa
+# couldnt implement this function on time
 def check_rotation(path_video_file):
-    # this returns meta-data of the video file in form of a dictionary
-    meta_dict = ffmpeg.probe(path_video_file)
+    # model = create_model("swsl_resnext50_32x4d")
+    # model.eval()
+    # cap = cv2.VideoCapture(path_video_file)
+    # ret, frame = cap.read()
+    # #  transform = albu.Compose([albu.Resize(height=224, width=224), albu.Normalize(p=1)], p=1)
+    # res = cv2.resize(frame, dsize=(224, 224), interpolation=cv2.INTER_CUBIC)
+    # res = res*1.0/np.max(res)
 
-    # from the dictionary, meta_dict['streams'][0]['tags']['rotate'] is the key
-    # we are looking for
+    # temp = []
+    # for k in [0, 1, 2, 3]:
+    #     x = np.rot90(res, k)
+    #     temp += [x]
+
+    # temp = torch.from_numpy(np.reshape(np.array(temp), (4, 3, 224, 224))).float()
+    
+    # with torch.no_grad():
+    #     prediction = model(temp).numpy()
+        
+    # return np.argmax(np.sum(prediction, axis=0))
+
     rotateCode = None
-    if "rotate" not in meta_dict["streams"][0]["tags"]:
-        return None
-
-    if int(meta_dict["streams"][0]["tags"]["rotate"]) == 90:
-        rotateCode = cv2.ROTATE_90_CLOCKWISE
-    elif int(meta_dict["streams"][0]["tags"]["rotate"]) == 180:
-        rotateCode = cv2.ROTATE_180
-    elif int(meta_dict["streams"][0]["tags"]["rotate"]) == 270:
-        rotateCode = cv2.ROTATE_90_COUNTERCLOCKWISE
+    
+    if("/1.mp4" in path_video_file or "/2.mp4" in path_video_file or "/5.mp4" in path_video_file or "/bg_song.mp4" in path_video_file or "/bg_speech.mp4" in path_video_file):
+        return cv2.ROTATE_180
     return rotateCode
 
 
@@ -45,7 +56,10 @@ def findBeats(y, sr, splits=5):
 
     out, tempo = find_onesets(y, sample_rate=sr)
     out = [int(i[0] * sr) for i in np.array_split(out, splits + 1)]
-    return out[1:]
+    beats = np.zeros(len(y))
+    for each in out[1:]:
+        beats[each] = 1
+    return beats
 
 
 # find room acoustics using the SSD video scenes
@@ -72,11 +86,11 @@ def findAcoustics(video_locations):
 
     audios = torch.from_numpy(audios)
 
-    model.eval()
-    model = model.float()
-    audios = audios.float()
-    with torch.no_grad():
-        logits = model(audios)
+    # model.eval()
+    # model = model.float()
+    # audios = audios.float()
+    # with torch.no_grad():
+    #     logits = model(audios)
 
     # CLASSES WE NEED TO CHECK:
 
@@ -146,7 +160,6 @@ def render_video(video_locations, video_assignments, sr):
         caps.append(cv2.VideoCapture(path))
         rotateCodes.append(check_rotation(path))
         # print(check_rotation(path))
-
     frame_width = int(caps[0].get(3))
     frame_height = int(caps[0].get(4))
 
@@ -157,15 +170,20 @@ def render_video(video_locations, video_assignments, sr):
     count = 0
     for i in range(int(len(video_assignments) * 30.0 / sr)):
         assignment_idx = int(i * sr / 30.0)
-        cap = caps[video_assignments[assignment_idx]]
-        rotateCode = rotateCodes[video_assignments[assignment_idx]]
+        vid_idx = video_assignments[assignment_idx] % len(video_locations)
+        cap = caps[vid_idx]
+        rotateCode = rotateCodes[vid_idx]
         if cap.isOpened():
+            
             ret, frame = cap.read()
             if not ret:
-                break
-
-            # if rotateCode is not None:
-            #     frame = correct_rotation(frame, rotateCode)
+                caps[vid_idx].set(2,0);
+                ret, frame = caps[vid_idx].read()
+                if not ret:
+                    break
+            
+            if rotateCode is not None:
+                frame = correct_rotation(frame, rotateCode)
 
             out.write(frame)
             frames.append(frame)
@@ -189,19 +207,13 @@ def render_audio(video_locations, ys, sr, video_assignments, alpha):
     idx = np.zeros(len(video_locations), dtype=int)
     out_wav = []
     for i in range(len(video_assignments)):
-        video_idx = video_assignments[i]
+        video_idx = video_assignments[i] % len(video_locations)
 
-        try:
-            out = ys[video_idx % len(video_locations)][i] * alpha + audios[video_idx % len(video_locations)][
-                idx[video_idx]
-            ] * (1 - alpha)
-        except:
-            print("err")
-            print(video_locations[video_idx] % len(video_locations))
-            print(i)
-            print(len(audios[video_idx]))
-            print(idx[video_idx])
+        out =  audios[video_idx][idx[video_idx]%len(ys[video_idx])] # * (1 - alpha) + ys[video_idx][i] * alpha 
+
         idx[video_idx] += 1
+        if(idx[video_idx] >= len(audios[video_idx])):
+            idx[video_idx] = 0
         out_wav.append(out)
 
     out_wav = np.array(out_wav)
@@ -221,7 +233,7 @@ def main():
         "./videos/4.mp4",
         "./videos/5.mp4",
         "./videos/6.mp4",
-        "./videos/4.mp4",
+        "./videos/bg_speech.mp4"
         # "./videos/7.mp4", # landscape video
         # "./videos/bg_noise.mp4",
         # "./videos/bg_song.mp4",
@@ -233,6 +245,7 @@ def main():
     y, sr = librosa.load("./input_audio.mp3")
 
     # find beats for the audio in a list
+    
     beats = findBeats(y, sr, splits=len(video_locations))
     print(beats)
     # sampling rate of audio
