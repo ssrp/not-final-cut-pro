@@ -16,3 +16,31 @@ To start with, the our system takes in a bunch of clips from the user along with
     - Scene analysis based on room acoustics
 4. Equilisation
     - Equilising the audio to suit the best scenes
+
+
+# Setting up the experiments environment
+
+For setting up, you can install conda and import the environment from `environment.yml`
+```shell
+conda env create -f environment.yml
+```
+Now you have an environment named `torch`. 
+```shell
+# dependencies
+conda activate torch
+pip install pedalboard
+pip install -e 'git+https://github.com/kkoutini/passt_hear21@0.0.17#egg=hear21passt' 
+```
+
+In order to check the environment we used in our runs, please check the `environment.yml` and `pip_list.txt` files.
+ Which were exported using:
+```shell
+conda env export --no-builds | grep -v "prefix" > environment.yml
+pip list > pip_list.txt
+```
+
+# Getting started 
+The input audio has to be in the "audio" folder, and the input videos in the videos folder. You need to update the config.josn and then run:
+```shell
+./run.sh
+```
