@@ -7,8 +7,8 @@ Here is the state-of-the-art video mashup system with the most advanced audio AP
 To start with, the our system takes in a bunch of clips from the user along with a desired audio file. Our system analyses the videos and audio, find the most suitable portions and combine them to create a beautiful montage for you. 
 
 ### Our features:
-1. Video analysis 
-    - Finding the best parts
+1. Video information analysis 
+    - Using the audio to predict presence of traffic, reverb, presence of speech, music etc.
     - Fixing any video rotation issues
 2. Beat analysis
     - Changing videos at the best suited audio beats
