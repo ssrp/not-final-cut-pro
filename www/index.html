@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+        <title>Not Final Cut Pro</title>
+
+
+       <script>
+
+        // This will generate the text file content based on the form data
+        function saveResponses() {
+            var timestamp = new Date().toLocaleTimeString();
+            //alert("Detection starting")
+            const texture = document.getElementById("texture").value;
+            const flow = document.getElementById("flow").value;
+            var data = texture + '\r\n'+ flow + '\r\n';
+      
+            WriteToTimestampFile(timestamp)
+            WriteToTextFile(data)
+            alert("The File was UPLOADED!")
+       
+        }
+
+        // This will save a timestampfile text file in the download folder
+        function WriteToTimestampFile(data) {
+ 
+            const textToBLOB = new Blob([data], { type: 'text/plain' });
+            const sFileName = 'timestamp.txt';	   // The file to save the data.
+
+            let newLink = document.createElement("a");
+
+            newLink.href= URL.createObjectURL(textToBLOB);
+            newLink.download = sFileName;
+            newLink.click();
+            URL.revokeObjectURL(newLink.href);
+   
+        }
+        
+        // This will save a formData text file in the download folder with the users inputs
+        function WriteToTextFile(data) {
+        
+        const textToBLOB = new Blob([data], { type: 'text/plain' });
+        const sFileName = 'formData.txt';	   // The file to save the data.
+
+        let newLink = document.createElement("a");
+
+            newLink.href= URL.createObjectURL(textToBLOB);
+            newLink.download = sFileName;
+            newLink.click();
+            URL.revokeObjectURL(newLink.href);
+
+        }
+        </script>
+    </head>
+
+    
+    <body>
+         <nav class="navbar navbar-inverse">
+            <div class="container">
+            <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Not Final Cut Pro</a>
+        </div>
+    </div>
+</nav>
+
+        <div class="container">
+            <div class="row align-items-start">
+                <div class="col" style = "background-color: #F5F5DC; width: 50%;  height:100%; vertical-align: middle; text-align: center; float: left; padding: 10px;" >
+                    <div class="row">
+                        <h2>Begin here!</h2>
+                    </div>
+                    <div class="row">
+                            <b>Input your videos from the day, your favorite audio and <br> we will make an intelligent mash-up for you!</b>
+                            <p>
+                            </p>
+                    </div>
+
+                    <div class="row" style ="justify-content: center;">
+                            <form name="form" method="post" action="." id="formToSave" >
+                                <p><label for="videos">1. Click on the "Choose File" button to upload your video clips (minimum 6):</label>
+                                <input type="file" accept=" video/*" id="videos" name="videos" multiple style ="margin: auto;"/></p>
+
+                                <p>
+                                <label for="audio">2. Click on the "Choose File" button to upload your audio clips (max 1):</label>
+                                <input type="file" accept=" audio/*" id="audio" name="audio" style ="margin: auto;" /></p>
+
+                                <p><label for="time_thres">3. Minimum Video Threshold (secs, min: 2s):</label>
+                                <input type="number" id="time_thres" name="time_thres" min="0" max="1" step=".01"></p>
+
+                                <p><label for="flow">4. Video change freq (1-10):</label>
+                                <input type="number" id="flow" name="flow" min="2" max="9"></p>
+                        
+                                <p><input type="button" value="Upload Data" onclick="saveResponses()"/></p>
+                            </form>
+
+                    </div>
+
+                    <div class="row">
+                      
+                    </div>
+
+                </div>
+                <div class="col" style ="background-color: #FA8072; width: 50% ; height:100%; text-align: center;vertical-align: middle; justify-content: center; float: right; padding: 10px;">
+                    <div class="row">
+                        <h2>Final Mashup</h2>
+                    </div>  
+                        <video width="320" height="600" controls>
+                          <source src="../videos/6.mp4">
+                        </video>
+                        <p>
+                        </br>
+                        </p>
+                </div>
+            </div>
+        </div><!-- /.container -->
+        
+        
+    </body>
+</html>:
